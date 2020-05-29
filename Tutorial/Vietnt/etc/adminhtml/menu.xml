@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Tutorial_Vietnt::faq_content" title="Faqs" module="Tutorial_Vietnt" sortOrder="51" resource="Tutorial_Vietnt::faq_content"/>
+        <add id="Tutorial_Vietnt::faq" title="Manage FAQs" module="Tutorial_Vietnt" sortOrder="10" action="vietnt/faq" resource="Tutorial_Vietnt::faq" parent="Tutorial_Vietnt::faq_content"/>
+        <add id="Tutorial_Vietnt::hello_configuration" title="Configuration" module="Tutorial_Vietnt" sortOrder="99" parent="Tutorial_Vietnt::faq_content" action="adminhtml/system_config/edit/section/faq" resource="Tutorial_Vietnt::faq_configuration"/>
+    </menu>
+</config>

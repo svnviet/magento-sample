@@ -1,0 +1,110 @@
+<?php
+namespace Tutorial\Vietnt\Controller\Adminhtml\Faq;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Image\AdapterFactory;
+use Magento\MediaStorage\Model\File\UploaderFactory;
+use Magento\Framework\Filesystem;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+
+
+
+
+
+class Save extends \Magento\Backend\App\Action
+{
+
+
+    protected $adapterFactory;
+    protected $uploader;
+    protected $filesystem;
+    protected $timezoneInterface;
+
+    public function __construct(Action\Context $context,\Magento\Framework\Image\AdapterFactory $adapterFactory,\Magento\MediaStorage\Model\File\UploaderFactory $uploader,\Magento\Framework\Filesystem $filesystem)
+        {
+        $this->adapterFactory = $adapterFactory;
+        $this->uploader = $uploader;
+        $this->filesystem = $filesystem;
+        parent::__construct($context);
+        }
+
+    public function execute()
+    {
+        
+        $data = $this->getRequest()->getParams();
+        if ($data) {
+            $model = $this->_objectManager->create('Tutorial\Vietnt\Model\Faq');
+        
+            if (isset($_FILES['image']) && isset($_FILES['image']['name']) && strlen($_FILES['image']['name'])) {
+                try {
+                        $base_media_path = 'pub/media';
+                        $uploader = $this->uploader->create(
+                        ['fileId' => 'image']
+                        );
+                        // $uploader = $this->_objectManager->create('Magento\Core\Model\File\Uploader', array('fileId' => 'image'));
+
+                        $uploader->setAllowedExtensions(array('jpg', 'jpeg', 'png'));
+                        $imageAdapter = $this->adapterFactory->create();
+                        $uploader->addValidateCallback('image', $imageAdapter, 'validateUploadFile');
+
+                        $uploader->setAllowRenameFiles(true);
+                        $uploader->setFilesDispersion(true);
+
+
+                        $mediaDirectory = $this->filesystem->getDirectoryRead(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA);
+                        $result = $uploader->save($mediaDirectory->getAbsolutePath(base_media_path));
+                        $data['image'] = base_media_path.$result['file'];
+
+
+                        // $config = $this->_objectManager->get('Magento\Bannerslider\Model\Banner');
+                        // $result = $uploader->save($mediaDirectory->getAbsolutePath('bannerslider/images'));
+                        // unset($result['tmp_name']);
+                        // unset($result['path']);
+                        // $data['image'] = $result['file'];
+                } catch (Exception $e) {
+                                        if ($e->getCode() == 0) {
+                                        $this->messageManager->addError($e->getMessage());
+                                        }
+            }
+            }else   {if (isset($data['image']) && isset($data['image']['value'])) {
+                        if (isset($data['image']['delete'])) {
+                            $data['image'] = null;
+                            $data['delete_image'] = true;
+                            } elseif (isset($data['image']['value'])) {
+                                        $data['image'] = $data['image']['value'];
+                            } else {
+                                        $data['image'] = null;
+                            }
+                }
+            } 
+            $id = $this->getRequest()->getId('id');
+            if ($id) {
+                $model->load($id);
+            }
+            // $data['id']=$id
+            $model->setData($data);
+            // $model->setData('id'->$id)
+            try {
+                $model->save();
+                $this->messageManager->addSuccess(__());
+                $this->_objectManager->get('Magento\Backend\Model\Session')->setFormData(false);
+                if ($this->getRequest()->getParam('back')) {
+                    $this->_redirect('*/*/edit', array('id' => $model->getId(), '_current' => true));
+                    return;
+                }
+                $this->_redirect('*/*/');
+                return;
+            } catch (\Magento\Framework\Model\Exception $e) {
+                $this->messageManager->addError($e->getMessage());
+            } catch (\RuntimeException $e) {
+                $this->messageManager->addError($e->getMessage());
+            } catch (\Exception $e) {
+                $this->messageManager->addException($e, __('Something went wrong while saving .'));
+            }
+
+            $this->_getSession()->setFormData($data);
+            $this->_redirect('*/*/edit', array('id' => $this->getRequest()->getParam('id')));
+            return;
+        }
+        $this->_redirect('*/*/');
+    }
+}
